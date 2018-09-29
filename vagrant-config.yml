@@ -12,5 +12,5 @@
     - dhcpd1
   dhcpd:
     - dhcpd1
-  boss__dhcpd__servers:
+  dhcpd_servers:
     - dhcpd1
