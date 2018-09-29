@@ -1,0 +1,94 @@
+{% import 'macros.j2' as tpl with context %}
+# {{ ansible_managed }}
+
+{% if boss__dhcpd__authoritative is defined and boss__dhcpd__authoritative %}
+authoritative;
+
+{% elif boss__dhcpd__authoritative is undefined or (boss__dhcpd__authoritative is defined and not boss__dhcpd__authoritative) %}
+not authoritative;
+
+{% endif %}
+{% if boss__dhcpd__global_default_lease_time|d() and boss__dhcpd__global_default_lease_time %}
+default-lease-time {{ boss__dhcpd__global_default_lease_time }};
+{% endif %}
+{% if boss__dhcpd__global_max_lease_time|d() and boss__dhcpd__global_max_lease_time %}
+max-lease-time {{ boss__dhcpd__global_max_lease_time }};
+
+{% endif %}
+{% if boss__dhcpd__log_facility|d() and boss__dhcpd__log_facility %}
+log-facility {{ boss__dhcpd__log_facility }};
+
+{% endif %}
+{% if boss__dhcpd__auto_options|d() and boss__dhcpd__auto_options %}
+{% include 'auto_options.j2' %}
+{% endif %}
+{% if boss__dhcpd__options is defined and boss__dhcpd__options %}
+# Configuration options
+{{ boss__dhcpd__options }}
+
+{% endif %}
+{% include 'ipxe.j2' %}
+{% if boss__dhcpd__keys is defined and boss__dhcpd__keys %}
+{% for key in boss__dhcpd__keys %}
+{{ tpl.print_key(key) }}
+{% endfor %}
+{% endif %}
+{% if boss__dhcpd__zones is defined and boss__dhcpd__zones %}
+{% for zone in boss__dhcpd__zones %}
+{{ tpl.print_zone(zone) }}
+{% endfor %}
+{% endif %}
+{% if boss__dhcpd__classes is defined and boss__dhcpd__classes %}
+{% for class in boss__dhcpd__classes %}
+{{ tpl.print_class(class) }}
+{% endfor %}
+{% endif %}
+{% if boss__dhcpd__failovers is defined and boss__dhcpd__failovers %}
+{% for failover in boss__dhcpd__failovers %}
+{{ tpl.print_failover(failover) }}
+{% endfor %}
+{% endif %}
+{% if boss__dhcpd__shared_networks is defined and boss__dhcpd__shared_networks %}
+{% for network in boss__dhcpd__shared_networks %}
+{% if network.subnets is defined and network.subnets %}
+{% if network.comment is defined and network.comment %}
+# {{ network.comment }}
+{% endif %}
+shared-network "{{ network.name }}" {
+{% if network.options is defined and network.options %}
+{{ network.options | indent(8,true) }}
+{% endif %}
+{% if network.include is defined and network.include %}
+        include "{{ network.include }}";
+{% endif %}
+{% for subnet in network.subnets %}
+
+{{ tpl.print_subnet(subnet) | indent(8,true) }}
+{% endfor %}
+}
+
+{% endif %}
+{% endfor %}
+{% endif %}
+{% if boss__dhcpd__groups is defined and boss__dhcpd__groups %}
+{% for group in boss__dhcpd__groups %}
+{{ tpl.print_group(group) }}
+{% endfor %}
+{% endif %}
+{% if boss__dhcpd__subnets is defined and boss__dhcpd__subnets %}
+{% for subnet in boss__dhcpd__subnets %}
+{{ tpl.print_subnet(subnet) }}
+{% endfor %}
+{% endif %}
+{% if boss__dhcpd__hosts is defined and boss__dhcpd__hosts %}
+{{ tpl.print_hosts(boss__dhcpd__hosts) }}
+{% endif %}
+{% if boss__dhcpd__includes is defined and boss__dhcpd__includes %}
+{% for include in boss__dhcpd__includes %}
+include "{{ include }}";
+{% endfor %}
+
+{% endif %}
+{#
+    vim: ft=dhcpd
+#}

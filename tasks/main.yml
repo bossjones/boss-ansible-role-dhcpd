@@ -1,0 +1,47 @@
+---
+
+- include: dist_vars.yml
+- include: install.yml
+
+- name: Get list of nameservers configured in /etc/resolv.conf
+  shell: grep -E '^nameserver\s' /etc/resolv.conf | awk '{print $2}'
+  register: boss__dhcpd__register_nameservers
+  changed_when: False
+  when: boss__dhcpd__mode == 'server'
+  check_mode: False
+
+- name: Convert list of nameservers to Ansible list
+  set_fact:
+    boss__dhcpd__runtime_nameservers: "{{ boss__dhcpd__register_nameservers.stdout_lines }}"
+  when: (boss__dhcpd__register_nameservers is defined and boss__dhcpd__register_nameservers.stdout)
+
+- name: Configure DHCP server
+  template:
+    src: '{{ item }}.j2'
+    dest: '/{{ item }}'
+    owner: 'root'
+    group: 'root'
+    mode: '0644'
+  with_items: "{{ boss__dhcpd__templates }}"
+  notify: [ 'Restart dhcp server' ]
+  register: boss__dhcpd__register_config
+  when: boss__dhcpd__mode == 'server'
+
+- name: Make sure that included files exist
+  file:
+    path: '{{ item }}'
+    state: 'touch'
+    owner: 'root'
+    group: 'root'
+    mode: '0644'
+  with_items: '{{ boss__dhcpd__includes }}'
+  notify: [ 'Restart dhcp server' ]
+  when: ((item is defined and item) and boss__dhcpd__mode == 'server' and
+         (boss__dhcpd__register_config is defined and boss__dhcpd__register_config.changed))
+
+- name: Make sure that IPv6 lease file exists
+  command: touch /var/lib/dhcp/dhcpd6.leases creates=/var/lib/dhcp/dhcpd6.leases
+  when: boss__dhcpd__ipversion == '6'
+
+- include: dhcp-probe.yml
+  when: boss__dhcpd__probe|d() and boss__dhcpd__probe

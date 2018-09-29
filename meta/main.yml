@@ -1,0 +1,24 @@
+---
+
+# dependencies:
+
+#   - role: debops.secret
+
+galaxy_info:
+  author: 'Malcolm Jones'
+  description: 'Install and configure ISC DHCP Server'
+  license: 'Apache 2.0'
+  min_ansible_version: '2.2.0'
+  platforms:
+  - name: Ubuntu
+    versions:
+    - all
+  - name: Debian
+    versions:
+    - all
+  - name: Archlinux
+  - name: Alpine
+  categories:
+  - networking
+  - system
+

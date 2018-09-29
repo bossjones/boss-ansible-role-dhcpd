@@ -1,0 +1,30 @@
+{% if boss__dhcpd__domain_name|d() and boss__dhcpd__domain_name %}
+{% set boss__dhcpd__tpl_domain_search = [ boss__dhcpd__domain_name ] + boss__dhcpd__domain_search|d([]) %}
+option domain-name "{{ boss__dhcpd__domain_name }}";
+
+option domain-search "{{ boss__dhcpd__tpl_domain_search | join('", "') }}";
+option dhcp6.domain-search "{{ boss__dhcpd__tpl_domain_search | join('", "') }}";
+
+{% endif %}
+{% set boss__dhcpd__tpl_nameservers = [] %}
+{% if boss__dhcpd__nameservers|d() and boss__dhcpd__nameservers %}
+{% set boss__dhcpd__tpl_nameservers = boss__dhcpd__nameservers %}
+{% elif boss__dhcpd__runtime_nameservers|d() and boss__dhcpd__runtime_nameservers %}
+{% for server in boss__dhcpd__runtime_nameservers %}
+{%   if server not in [ '127.0.0.1', '::1' ] %}
+{%     set _ = boss__dhcpd__tpl_nameservers.append(server) %}
+{%   endif %}
+{% endfor %}
+{% endif %}
+{% if boss__dhcpd__tpl_nameservers %}
+{% if boss__dhcpd__tpl_nameservers | ipv4 %}
+option domain-name-servers {{ boss__dhcpd__tpl_nameservers | ipv4 | join(", ") }};
+{% endif %}
+{% if boss__dhcpd__tpl_nameservers | ipv6 %}
+option dhcp6.name-servers {{ boss__dhcpd__tpl_nameservers | ipv6 | join(", ") }};
+{% endif %}
+
+{% endif %}
+{#
+    vim: ft=dhcpd
+#}

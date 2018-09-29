@@ -2,7 +2,7 @@
 
 # no_log: true
 
-- hosts: dhcpd_servers
+- hosts: boss__dhcpd__servers
   gather_facts: True
   become: yes
   become_method: sudo

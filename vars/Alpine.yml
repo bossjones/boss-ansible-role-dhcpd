@@ -1,0 +1,22 @@
+---
+
+boss__dhcpd__base_packages_map:
+  'server':
+    - 'dhcp'
+  'relay':
+    - 'dhcp'
+  'probe':
+    - 'dhcp-probe'
+
+boss__dhcpd__services:
+  'server':
+    - 'dhcpd'
+  'relay':
+    - 'dhcpd'
+  'probe':
+    - 'dhcp-probe'
+
+boss__dhcpd__templates:
+  - 'etc/dhcp/dhcpd.conf'
+
+# vim: set ts=2 sw=2:

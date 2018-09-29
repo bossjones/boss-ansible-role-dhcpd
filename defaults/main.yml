@@ -1,0 +1,307 @@
+---
+# Default variables
+# =================
+
+# .. contents:: Sections
+#    :local:
+#
+# -------------------
+#   General options
+# -------------------
+
+# .. envvar:: boss__dhcpd__mode
+#
+# What service type to configure on this host:
+#
+# - ``server``: host is an ISC DHCP server, see ``dhcpd(8)``
+#
+# - ``relay``: host is an ISC DHCP relay, see dhcrelay(8)
+#
+# - ``probe``: configure only ``dhcp-probe`` when enabled
+#
+boss__dhcpd__mode: 'server'
+
+
+# .. envvar:: boss__dhcpd__ipversion
+#
+# Internet Protocol version to configure: ``4`` or ``6``
+boss__dhcpd__ipversion: '4'
+
+
+# --------------------------------
+#   ISC DHCP Relay configuration
+# --------------------------------
+
+# .. envvar:: boss__dhcpd__relay_servers
+#
+# List of DHCP servers which should receive the relayed packets
+boss__dhcpd__relay_servers: [ '{{ ansible_default_ipv4.gateway
+                           if (ansible_default_ipv4.gateway|d())
+                           else [] }}' ]
+
+
+# .. envvar:: boss__dhcpd__relay_interfaces
+#
+# List of network interfaces that dhcrelay should listen on
+boss__dhcpd__relay_interfaces: []
+
+
+# .. envvar:: boss__dhcpd__relay_options
+#
+# Additional dhcrelay options
+boss__dhcpd__relay_options: '{{ "-" + boss__dhcpd__ipversion }}'
+
+
+# ---------------------------------
+#   ISC DHCP Server configuration
+# ---------------------------------
+
+# .. envvar:: boss__dhcpd__server_options
+#
+# dhcpd(8) options
+boss__dhcpd__server_options: '{{ "-" + boss__dhcpd__ipversion }}'
+
+
+# ---------------------------
+#   DHCP main configuration
+# ---------------------------
+
+# .. envvar:: boss__dhcpd__authoritative
+#
+# Is this DHCP server authoritative?
+boss__dhcpd__authoritative: False
+
+
+# .. envvar:: boss__dhcpd__log_facility
+#
+# Log facility to use
+boss__dhcpd__log_facility: 'local7'
+
+
+# .. envvar:: boss__dhcpd__interfaces
+#
+# List of network interfaces to listen on for DHCP requests
+# If this list is empty, Ansible will try to guess correct interfaces
+# automatically
+boss__dhcpd__interfaces: []
+
+
+# .. envvar:: boss__dhcpd__lease_time
+#
+# Max lease time in hours (default lease time is calculated below)
+boss__dhcpd__lease_time: '24'
+
+
+# .. envvar:: boss__dhcpd__global_default_lease_time
+#
+# Default lease time for all IP address leases (18 hours)
+boss__dhcpd__global_default_lease_time: '{{ (((boss__dhcpd__lease_time|int / 2) + 6) * 60 * 60)|round|int }}'
+
+
+# .. envvar:: boss__dhcpd__global_max_lease_time
+#
+# Maximum lease time for all IP addresses (24 hours)
+boss__dhcpd__global_max_lease_time: '{{ (boss__dhcpd__lease_time|int * 60 * 60)|round|int }}'
+
+
+# ---------------------------
+#   DHCP advertised options
+# ---------------------------
+
+# .. envvar:: boss__dhcpd__auto_options
+#
+# If enabled, ISC DHCP server will be configured with a set of automatically
+# detected options. See ``auto_options.j2`` template for more details.
+boss__dhcpd__auto_options: True
+
+
+# .. envvar:: boss__dhcpd__domain_name
+#
+# Default host domain to advertise
+boss__dhcpd__domain_name: '{{ ansible_domain }}'
+
+
+# .. envvar:: boss__dhcpd__domain_search
+#
+# List of additional domains which should be checked when looking for hostnames
+boss__dhcpd__domain_search: []
+
+
+# .. envvar:: boss__dhcpd__nameservers
+#
+# List of nameservers to advertise by default
+# If it's not specified, nameservers from ``/etc/resolv.conf`` will be used
+# instead.
+boss__dhcpd__nameservers: []
+
+
+# .. envvar:: boss__dhcpd__options
+#
+# Custom global options formatted as a text block
+boss__dhcpd__options: False
+
+
+# ----------------
+#   iPXE support
+# ----------------
+
+# .. envvar:: boss__dhcpd__ipxe
+#
+# Add iPXE-specific options to ISC DHCP server configuration.
+boss__dhcpd__ipxe: False
+
+
+# .. envvar:: boss__dhcpd__ipxe_dhcp_space
+#
+# Add DHCP options iPXE namespace in ``dhcpd.conf`` required to support
+# iPXE-specific DHCP options in the DHCP server configuration.
+boss__dhcpd__ipxe_dhcp_space: True
+
+
+# .. envvar:: boss__dhcpd__ipxe_chain_filename
+#
+# Initial file sent to hosts which requested a PXE boot, used to chain-load
+# iPXE boot loader.
+boss__dhcpd__ipxe_chain_filename: 'undionly.kpxe'
+
+
+# .. envvar:: boss__dhcpd__ipxe_filename
+#
+# File sent to hosts booted with iPXE, by default load the standard menu file.
+boss__dhcpd__ipxe_filename: 'menu.ipxe'
+
+
+# .. envvar:: boss__dhcpd__ipxe_options
+#
+# Additional DHCP options in a YAML text block format, added in the iPXE
+# section of the configuration.
+boss__dhcpd__ipxe_options: ''
+
+
+# ----------------------------------------
+#   ISC DHCP Server configuration scopes
+# ----------------------------------------
+
+# These lists allow you to generate nested configuration scopes in
+# dhcpd.conf. Most of the information about them can be found in dhcpd.conf(5)
+# manual page. You can create nested configuration using Ansible variable
+# expansion.
+
+# .. envvar:: boss__dhcpd__keys
+#
+# List of secret keys used for Dynamic DNS configuration. See
+# :ref:`boss__dhcpd__keys` for more details.
+boss__dhcpd__keys: []
+
+
+# .. envvar:: boss__dhcpd__zones
+#
+# List of DNS zones to update with Dynamic DNS configuration. See
+# :ref:`boss__dhcpd__zones` for more details.
+boss__dhcpd__zones: []
+
+
+# .. envvar:: boss__dhcpd__classes
+#
+# List of client classes (see dhcpd.conf(5)). More informaction can be found in
+# :ref:`boss__dhcpd__classes`.
+boss__dhcpd__classes: []
+
+
+# .. envvar:: boss__dhcpd__groups
+#
+# List of configuration scopes groped together. See :ref:`boss__dhcpd__groups` for
+# more details.
+boss__dhcpd__groups: []
+
+
+# .. envvar:: boss__dhcpd__shared_networks
+#
+# List of shared networks grouping specified subnets together. See
+# :ref:`boss__dhcpd__shared_networks` for more details.
+boss__dhcpd__shared_networks: []
+
+
+# .. envvar:: boss__dhcpd__subnets
+#
+# List of subnets not in a shared network. See :ref:`boss__dhcpd__subnets` for more
+# details.
+boss__dhcpd__subnets: [ '{{ boss__dhcpd__subnet_default[boss__dhcpd__ipversion] }}' ]
+
+# Default subnet managed automatically
+boss__dhcpd__subnet_default:
+  '4':
+    subnet: '{{ ansible_default_ipv4.network + "/" + ansible_default_ipv4.netmask }}'
+    routers: '{{ ansible_default_ipv4.gateway | default("") }}'
+    comment: 'Generated automatically by Ansible'
+  '6':
+    subnet: '{{ ((ansible_default_ipv6.address + "/" + ansible_default_ipv6.prefix)
+                 if ansible_default_ipv6.address|d() else "") }}'
+    comment: 'Generated automatically by Ansible'
+
+
+# .. envvar:: boss__dhcpd__hosts
+#
+# Global list of hosts in DHCP. See ref:`boss__dhcpd__hosts` for more details.
+boss__dhcpd__hosts: []
+
+
+# List of external files to include. See :ref:`boss__dhcpd__includes` for more
+# details.
+boss__dhcpd__includes: []
+
+
+# .. envvar:: boss__dhcpd__failovers
+#
+# DHCP failover configuration. See :ref:`boss__dhcpd__failovers` for more details.
+boss__dhcpd__failovers: []
+
+
+# -----------------------------
+#   dhcp-probe configuration
+# -----------------------------
+
+# .. envvar:: boss__dhcpd__probe
+#
+# Enable or disable ``dhcp-probe`` script
+boss__dhcpd__probe: False
+
+
+# .. envvar:: boss__dhcpd__probe_mail_to
+#
+# List of mail recipients which will receive messages about unauthorized DHCP
+# servers. Set to ``[]`` to disable.
+boss__dhcpd__probe_mail_to: [ 'root@{{ ansible_domain }}' ]
+
+
+# .. envvar:: boss__dhcpd__probe_page_to
+#
+# Alternative list of mail recipients which will receive mail messages. Meant
+# to be used as a "pager service", you can use ``debops.smstools`` role to
+# setup a mail-SMS gateway and send the SMS messages that way.
+boss__dhcpd__probe_page_to: []
+
+
+# .. envvar:: boss__dhcpd__probe_mail_timeout
+#
+# Number of seconds between to wait between sending new mail messages
+boss__dhcpd__probe_mail_timeout: '{{ (20 * 60) }}'
+
+
+# .. envvar:: boss__dhcpd__probe_page_timeout
+#
+# Number of seconds between to wait between sending new pager messages
+boss__dhcpd__probe_page_timeout: '{{ (20 * 60) }}'
+
+
+# .. envvar:: boss__dhcpd__probe_legal_servers
+#
+# List of IP addresses of the host which are authorized DHCP servers.
+boss__dhcpd__probe_legal_servers: []
+
+
+# .. envvar:: boss__dhcpd__probe_options
+#
+# Additional ``dhcp-probe`` options specified as a YAML text block.
+boss__dhcpd__probe_options: ''
+
