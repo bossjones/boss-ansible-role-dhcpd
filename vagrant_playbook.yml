@@ -1,0 +1,107 @@
+---
+
+# no_log: true
+
+- hosts: dhcpd_servers
+  gather_facts: True
+  become: yes
+  become_method: sudo
+  tags:
+    - dhcpd
+  roles:
+    - role: boss-ansible-role-bootstrap
+    - role: boss-ansible-role-core
+    - role: boss-ansible-role-fact
+    - role: boss-ansible-role-environment
+    - role: boss-ansible-role-etckeeper
+      boss__etckeeper__vcs_user: 'jarvis'
+      boss__etckeeper__vcs_email: 'jarvis@theblacktonystark.com'
+    # dhcpd
+    - role: ../
+    - role: boss-ansible-role-dnsmasq
+      boss__dnsmasq__conf_log_async: 25
+      # For debugging purposes, log each DNS query as it passes through
+      boss__dnsmasq__conf_log_dns: True
+      boss__dnsmasq__conf_dns_loop_detect: True
+      #  All reverse lookups for private IP ranges (ie 192.168.x.x, etc) which
+      # are not found in /etc/hosts or the DHCP leases file are answered with
+      # "no such domain" rather than being forwarded upstream.
+      # Never forward addresses in the non-routed address spaces.
+      boss__dnsmasq__conf_bogus_priv: True
+      # If you don't want dnsmasq to read /etc/hosts
+      boss__dnsmasq__conf_no_hosts: True
+      boss__dnsmasq__packages_install_recommends: True
+      # Upgrade the database if older than these seconds
+      # Time is only valid in Debian, set to 0/False to disable
+      boss__dnsmasq__packages_update_cache: 1800
+
+      boss__dnsmasq__daemon: dnsmasq
+      boss__dnsmasq__user: dnsmasq
+      boss__dnsmasq__group: nogroup
+
+      boss__dnsmasq__pidfile: /var/run/dnsmasq.pid
+      boss__dnsmasq__config_file: /etc/dnsmasq.conf
+      boss__dnsmasq__config_dir: /etc/dnsmasq.d
+      boss__dnsmasq__var_dir: /var/lib/dnsmasq
+      boss__dnsmasq__config_addhosts: /etc/dnsmasq.hosts
+      boss__dnsmasq__config_dhcphosts: /var/lib/dnsmasq/dhcp.leases
+      boss__dnsmasq__config_dhcpscript: /var/lib/dnsmasq/script
+      # Never forward plain names (without a dot or domain part)
+      boss__dnsmasq__conf_domain_needed: True
+      boss__dnsmasq__conf_cache_size: 10000
+      ###############################################
+      #       search localdomain
+      # nameserver 192.168.1.1
+      ### resolv.conf
+      boss__dnsmasq__host_domain: darklabs.home
+      #boss__dnsmasq__host_search: local
+      # Set it to the ips of the private DNS servers, then default to LAN nameserver
+      boss__dnsmasq__host_resolvers: [ "127.0.0.1" , "192.168.33.100", "192.168.33.101", "192.168.1.1" ]
+      boss__dnsmasq__conf_strict_order: True
+      ##############################################
+      boss__dnsmasq__dhcp: False
+      boss__dnsmasq__tftp: False
+      boss__dnsmasq__conf_dhcp:
+        # enp0s8 for Centos 7, eth1 for Ubuntu
+        - device: "{{ ansible_default_ipv4.interface }}"
+          range: ["10.0.0.0", "10.0.7.255", "infinite"]
+          ignore_names: True
+          generate_names: True
+          option:
+            - "option:router,{{ ansible_default_ipv4.gateway }}"
+            - "option:dns-server,{{ ansible_default_ipv4.address }}"
+          boot:
+            - "pxelinux.0"
+          tftp: "/tmp"
+      boss__dnsmasq__conf_hosts:
+      - ["192.168.33.100", "dnsmasq1.darklabs.home", "dnsmasq1" ]
+      - ["192.168.33.101", "dnsmasq2.darklabs.home", "dnsmasq2" ]
+
+      boss__dnsmasq__conf_address:
+      - ["/localhost/127.0.0.1"]
+      - ["/localhost/::1"]
+
+      # NOTE: local=
+      # # Specify IP address of upstream servers directly. Setting this flag does not
+      # suppress reading of /etc/resolv.conf.
+      # Don't let anything outside of our dns server return resolved ip addresses for these values below
+      boss__dnsmasq__conf_servers: [ "/darklabs.home/", "/hyenalabs.home/" ]
+
+      # Log lots of extra information about DHCP transactions.
+      boss__dnsmasq__conf_log_dhcp: False
+
+      # Should be set when dnsmasq is definitely the only DHCP server on a network.
+      boss__dnsmasq__conf_dhcp_authoritative: False
+
+      boss__dnsmasq__conf_domain: "darklabs.home"
+
+      # Only if boss__dnsmasq__conf_domain is set, the unqualified name is no longer put
+      # in the DNS, only the qualified name.
+      boss__dnsmasq__conf_dhcp_fqdn: True
+
+      ### resolv.conf
+      # appended to DHCP hosts and, if above option specified, to hosts from static IPs
+      # domain=lan.mydomain.com
+      boss__dnsmasq__host_domain: "darklabs.home"
+      boss__dnsmasq__host_search: "darklabs.home"
+
